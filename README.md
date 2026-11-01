@@ -71,7 +71,7 @@ bash deploy/scripts/up.sh   # cluster, plateforme, données, application, tunnel
 Étape par étape :
 
 ```bash
-./deploy/scripts/00-cluster.sh           # MINIKUBE_MEMORY=9g et MINIKUBE_CPUS=4 par défaut
+./deploy/scripts/00-cluster.sh           # MINIKUBE_MEMORY=8g et MINIKUBE_CPUS=4 par défaut
 minikube tunnel --profile pme            # dans un autre terminal (laisser ouvert)
 ./deploy/scripts/01-platform.sh
 ./deploy/scripts/02-data.sh
