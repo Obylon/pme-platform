@@ -27,7 +27,7 @@
     <properties>
         <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <springdoc.version>3.0.3</springdoc.version>
+        <springdoc.version>3.2.0</springdoc.version>
         <!-- Tomcat 11.0.24 fourni par Boot 4.1.1 : CVE critiques corrigées en 11.0.25+ (Dependency-Check) -->
         <tomcat.version>11.0.27</tomcat.version>
         <!-- Trivy (images) : CVE HIGH corrigées dans ces versions -->
@@ -35,10 +35,10 @@
         <jackson-2-bom.version>2.21.7</jackson-2-bom.version>
         <rabbit-amqp-client.version>5.34.0</rabbit-amqp-client.version>
         <cucumber.version>8.0.4</cucumber.version>
-        <jacoco.version>0.8.13</jacoco.version>
-        <jib.version>3.4.4</jib.version>
-        <dependency-check.version>12.1.0</dependency-check.version>
-        <cyclonedx.version>2.9.1</cyclonedx.version>
+        <jacoco.version>0.8.16</jacoco.version>
+        <jib.version>3.5.2</jib.version>
+        <dependency-check.version>13.0.0</dependency-check.version>
+        <cyclonedx.version>2.9.3</cyclonedx.version>
         <!-- Image registry (surchargée en CI : ghcr.io/<owner>) -->
         <image.registry>pme</image.registry>
         <image.tag>${project.version}</image.tag>
