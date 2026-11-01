@@ -1,4 +1,5 @@
 # Mises à jour automatiques des dépendances (KAN-27) : une PR groupée par écosystème chaque lundi.
+# Images : construites par Jib (base distroless dans pom.xml), vérifiées par Trivy à chaque pipeline.
 # Chaque PR passe par le pipeline complet (tests, Sonar, Dependency-Check, Trivy) avant fusion.
 version: 2
 updates:
@@ -14,7 +15,4 @@ updates:
         exclude-patterns: ["org.springframework*", "io.micrometer*", "tools.jackson*", "com.fasterxml.jackson*"]
   - package-ecosystem: github-actions
     directory: /
-    schedule: { interval: weekly, day: monday }
-  - package-ecosystem: docker
-    directory: /deploy
     schedule: { interval: weekly, day: monday }
