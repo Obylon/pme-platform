@@ -15,7 +15,6 @@ global:
     host: pme-rabbit.pme.svc.cluster.local
     port: 5672
     secret: pme-rabbit-default-user
-  swaggerUi: true                 # false en production
 
 services:
   community-service:

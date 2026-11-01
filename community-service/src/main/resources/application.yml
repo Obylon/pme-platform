@@ -57,10 +57,6 @@ management:
       slo:
         http.server.requests: 100ms,250ms,500ms,1s
 
-springdoc:
-  swagger-ui:
-    enabled: ${SWAGGER_UI_ENABLED:true}
-
 logging:
   pattern:
     correlation: "[${spring.application.name:},%X{traceId:-},%X{spanId:-}] "

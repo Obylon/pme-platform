@@ -28,6 +28,8 @@
         <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <springdoc.version>3.0.3</springdoc.version>
+        <!-- Tomcat 11.0.24 fourni par Boot 4.1.1 : CVE critiques corrigées en 11.0.25+ (Dependency-Check) -->
+        <tomcat.version>11.0.27</tomcat.version>
         <cucumber.version>8.0.4</cucumber.version>
         <jacoco.version>0.8.13</jacoco.version>
         <jib.version>3.4.4</jib.version>
@@ -50,7 +52,7 @@
             </dependency>
             <dependency>
                 <groupId>org.springdoc</groupId>
-                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <artifactId>springdoc-openapi-starter-webmvc-api</artifactId>
                 <version>${springdoc.version}</version>
             </dependency>
             <dependency>

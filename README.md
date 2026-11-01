@@ -74,7 +74,7 @@ echo "<EXTERNAL-IP> pme.local" | sudo tee -a /etc/hosts
 ```
 
 Grafana : `kubectl -n monitoring port-forward svc/monitoring-grafana 3000:80` (identifiants dans le secret
-`monitoring-grafana`). Tableaux de bord à importer : 4701 (JVM Micrometer) et 19004 (Spring Boot 3).
+`monitoring-grafana`). Tableaux de bord à importer : 4701 (JVM Micrometer) et 19004 (Spring Boot).
 
 Console d'administration Keycloak (non exposée publiquement) : `kubectl -n pme port-forward svc/keycloak 8080`.
 

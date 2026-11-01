@@ -51,7 +51,6 @@ spec:
             - { name: OIDC_ISSUER_URI, value: {{ $root.Values.global.oidc.issuerUri | quote }} }
             - { name: OIDC_JWK_SET_URI, value: {{ $root.Values.global.oidc.jwkSetUri | quote }} }
             - { name: OIDC_AUDIENCE, value: {{ $root.Values.global.oidc.audience | quote }} }
-            - { name: SWAGGER_UI_ENABLED, value: {{ $root.Values.global.swaggerUi | quote }} }
             {{- if $svc.amqp }}
             - { name: RABBITMQ_HOST, value: {{ $root.Values.global.rabbitmq.host | quote }} }
             - { name: RABBITMQ_PORT, value: {{ $root.Values.global.rabbitmq.port | quote }} }
