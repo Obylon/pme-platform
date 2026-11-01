@@ -156,6 +156,8 @@
                             <format>SARIF</format>
                         </formats>
                         <nvdApiKeyEnvironmentVariable>NVD_API_KEY</nvdApiKeyEnvironmentVariable>
+                        <!-- OSS Index (Sonatype) exige un compte depuis 2025 ; NVD reste la source, Trivy complète -->
+                        <ossindexAnalyzerEnabled>false</ossindexAnalyzerEnabled>
                         <suppressionFiles>
                             <suppressionFile>${maven.multiModuleProjectDirectory}/security/dependency-check-suppressions.xml</suppressionFile>
                         </suppressionFiles>
