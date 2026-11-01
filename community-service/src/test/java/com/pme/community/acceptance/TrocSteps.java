@@ -15,7 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.pme.community.domain.Listing;
 import com.pme.community.domain.ListingRepository;
 
@@ -58,8 +58,8 @@ public class TrocSteps {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body(title, type, category))).andReturn();
         if (lastResult.getResponse().getStatus() == 201) {
-            listingId = UUID.fromString(json.readTree(lastResult.getResponse().getContentAsString())
-                    .get("id").asText());
+            listingId = UUID.fromString(String.valueOf(
+                    json.readValue(lastResult.getResponse().getContentAsString(), java.util.Map.class).get("id")));
         }
     }
 

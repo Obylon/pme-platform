@@ -13,8 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.pme.shop.cart.CartItemRepository;
 import com.pme.shop.catalog.Product;
 import com.pme.shop.catalog.ProductRepository;
@@ -86,8 +85,7 @@ public class BoutiqueSteps {
     @Then("une commande au statut {string} est créée")
     public void commandeCreee(String status) throws Exception {
         assertThat(lastResult.getResponse().getStatus()).isEqualTo(201);
-        JsonNode body = json.readTree(lastResult.getResponse().getContentAsString());
-        assertThat(body.get("status").asText()).isEqualTo(status);
+        assertThat(body().get("status")).isEqualTo(status);
     }
 
     @Then("le stock du produit passe à {int}")
@@ -98,9 +96,9 @@ public class BoutiqueSteps {
 
     @Then("le panier est vidé")
     public void panierVide() throws Exception {
-        JsonNode cart = json.readTree(mvc.perform(get("/api/shop/cart").with(member(USER)))
-                .andReturn().getResponse().getContentAsString());
-        assertThat(cart.get("lines").isEmpty()).isTrue();
+        java.util.Map<?, ?> cart = json.readValue(mvc.perform(get("/api/shop/cart").with(member(USER)))
+                .andReturn().getResponse().getContentAsString(), java.util.Map.class);
+        assertThat((java.util.List<?>) cart.get("lines")).isEmpty();
     }
 
     @When("le membre souscrit la formule {string}")
@@ -111,14 +109,17 @@ public class BoutiqueSteps {
 
     @Then("un abonnement actif est créé jusqu'à aujourd'hui plus un an")
     public void abonnementCree() throws Exception {
-        JsonNode body = json.readTree(lastResult.getResponse().getContentAsString());
-        assertThat(body.get("status").asText()).isEqualTo("ACTIVE");
-        assertThat(LocalDate.parse(body.get("endDate").asText())).isEqualTo(LocalDate.now().plusYears(1));
+        java.util.Map<?, ?> body = body();
+        assertThat(body.get("status")).isEqualTo("ACTIVE");
+        assertThat(LocalDate.parse(String.valueOf(body.get("endDate")))).isEqualTo(LocalDate.now().plusYears(1));
     }
 
     @Then("la date de fin est prolongée d'un an supplémentaire")
     public void prolonge() throws Exception {
-        JsonNode body = json.readTree(lastResult.getResponse().getContentAsString());
-        assertThat(LocalDate.parse(body.get("endDate").asText())).isEqualTo(LocalDate.now().plusYears(2));
+        assertThat(LocalDate.parse(String.valueOf(body().get("endDate")))).isEqualTo(LocalDate.now().plusYears(2));
+    }
+
+    private java.util.Map<?, ?> body() throws Exception {
+        return json.readValue(lastResult.getResponse().getContentAsString(), java.util.Map.class);
     }
 }

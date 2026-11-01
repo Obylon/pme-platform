@@ -6,14 +6,12 @@ import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.core.TopicExchange;
-import org.springframework.amqp.support.converter.DefaultJackson2JavaTypeMapper;
-import org.springframework.amqp.support.converter.Jackson2JavaTypeMapper;
-import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Topologie RabbitMQ du consommateur :
@@ -65,16 +63,12 @@ public class RabbitConfig {
     }
 
     /**
-     * Désérialisation selon le type du paramètre du listener (INFERRED) et non selon l'en-tête
-     * __TypeId__ du producteur : on n'instancie jamais une classe désignée par un message externe.
+     * Désérialisation selon le type du paramètre du listener (type déduit, comportement par défaut
+     * de Spring AMQP) et non selon l'en-tête __TypeId__ du producteur ; seul le package du contrat
+     * consommé est déclaré fiable.
      */
     @Bean
-    MessageConverter jsonMessageConverter(ObjectMapper objectMapper) {
-        Jackson2JsonMessageConverter converter = new Jackson2JsonMessageConverter(objectMapper);
-        DefaultJackson2JavaTypeMapper typeMapper = new DefaultJackson2JavaTypeMapper();
-        typeMapper.setTypePrecedence(Jackson2JavaTypeMapper.TypePrecedence.INFERRED);
-        typeMapper.setTrustedPackages("com.pme.notification.messaging");
-        converter.setJavaTypeMapper(typeMapper);
-        return converter;
+    MessageConverter jsonMessageConverter(JsonMapper jsonMapper) {
+        return new JacksonJsonMessageConverter(jsonMapper, "com.pme.notification.messaging");
     }
 }

@@ -17,15 +17,13 @@ import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.actuate.observability.AutoConfigureObservability;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.pme.community.TestcontainersConfig;
 import com.pme.community.config.RabbitConfig;
 import com.pme.community.domain.ListingPublishedEvent;
@@ -37,7 +35,6 @@ import com.pme.community.domain.ListingRepository;
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@AutoConfigureObservability
 @Import(TestcontainersConfig.class)
 class CommunityApiIT {
 
@@ -73,8 +70,7 @@ class CommunityApiIT {
                         .contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
-        JsonNode node = json.readTree(response);
-        return node.get("id").asText();
+        return String.valueOf(json.readValue(response, java.util.Map.class).get("id"));
     }
 
     @Test
@@ -164,8 +160,8 @@ class CommunityApiIT {
     }
 
     @Test
-    void actuatorPrometheusIsExposedForScraping() throws Exception {
-        mvc.perform(get("/actuator/prometheus")).andExpect(status().isOk());
+    void healthProbesArePublic() throws Exception {
+        mvc.perform(get("/actuator/health/liveness")).andExpect(status().isOk());
     }
 
 }

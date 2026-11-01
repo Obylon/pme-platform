@@ -1,13 +1,12 @@
 package com.pme.community.config;
 
 import org.springframework.amqp.core.TopicExchange;
-import org.springframework.amqp.support.converter.DefaultJackson2JavaTypeMapper;
-import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 @Configuration
 public class RabbitConfig {
@@ -26,12 +25,9 @@ public class RabbitConfig {
      * (Spring AMQP refuse par défaut toute classe hors java.lang / java.util).
      */
     @Bean
-    MessageConverter jsonMessageConverter(ObjectMapper objectMapper) {
-        Jackson2JsonMessageConverter converter = new Jackson2JsonMessageConverter(objectMapper);
+    MessageConverter jsonMessageConverter(JsonMapper jsonMapper) {
+        JacksonJsonMessageConverter converter = new JacksonJsonMessageConverter(jsonMapper, "com.pme.community.domain");
         converter.setCreateMessageIds(true);
-        DefaultJackson2JavaTypeMapper typeMapper = new DefaultJackson2JavaTypeMapper();
-        typeMapper.setTrustedPackages("com.pme.community.domain");
-        converter.setJavaTypeMapper(typeMapper);
         return converter;
     }
 }

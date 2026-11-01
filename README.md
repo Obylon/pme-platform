@@ -16,9 +16,9 @@ des applications logicielles ».
 |---|---|---|
 | Gateway | Entrée unique HTTPS, redirection HTTP→HTTPS, limitation de débit | Gateway API + Envoy Gateway, cert-manager |
 | Keycloak | Authentification OIDC, rôles `member` / `moderator` / `admin` | Keycloak 26 |
-| community-service | Annonces de troc / don, modération, événement `listing.published` | Spring Boot 3.5, Java 21 |
-| notification-service | Centres d'intérêt, notifications asynchrones, DLQ | Spring Boot 3.5, Spring AMQP |
-| shop-service | Catalogue, panier, commandes (stock concurrent), abonnements | Spring Boot 3.5 |
+| community-service | Annonces de troc / don, modération, événement `listing.published` | Spring Boot 4.1, Java 21 |
+| notification-service | Centres d'intérêt, notifications asynchrones, DLQ | Spring Boot 4.1, Spring AMQP |
+| shop-service | Catalogue, panier, commandes (stock concurrent), abonnements | Spring Boot 4.1 |
 | PostgreSQL | Une base et un rôle par service | CloudNativePG |
 | RabbitMQ | Échange `community.events`, files quorum + DLQ | RabbitMQ Cluster Operator |
 | Observabilité | Métriques, tableaux de bord, alertes SLO | Prometheus, Grafana (kube-prometheus-stack) |
@@ -113,4 +113,4 @@ démonstration et aux tests de charge ; il est à supprimer en production.
 
 Voir le plan de remédiation : perte possible d'événement si RabbitMQ est indisponible au moment de la publication
 (Transactional Outbox à mettre en place), paiement simulé, limitation de débit globale et non par IP, DAST non
-authentifié, Spring Boot 3.5 en fin de support open source (migration vers Spring Boot 4 à planifier).
+authentifié.
