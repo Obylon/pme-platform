@@ -4,6 +4,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 
 import java.util.Arrays;
 
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
@@ -15,7 +16,9 @@ public final class TestJwt {
 
     public static RequestPostProcessor user(String subject, String... roles) {
         return jwt().jwt(j -> j.subject(subject))
-                .authorities(Arrays.stream(roles).map(r -> new SimpleGrantedAuthority("ROLE_" + r)).toList());
+                .authorities(Arrays.stream(roles)
+                        .map(r -> (GrantedAuthority) new SimpleGrantedAuthority("ROLE_" + r))
+                        .toList());
     }
 
     public static RequestPostProcessor member(String subject) {
