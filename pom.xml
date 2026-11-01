@@ -30,6 +30,10 @@
         <springdoc.version>3.0.3</springdoc.version>
         <!-- Tomcat 11.0.24 fourni par Boot 4.1.1 : CVE critiques corrigées en 11.0.25+ (Dependency-Check) -->
         <tomcat.version>11.0.27</tomcat.version>
+        <!-- Trivy (images) : CVE HIGH corrigées dans ces versions -->
+        <jackson-bom.version>3.1.7</jackson-bom.version>
+        <jackson-2-bom.version>2.21.7</jackson-2-bom.version>
+        <rabbit-amqp-client.version>5.34.0</rabbit-amqp-client.version>
         <cucumber.version>8.0.4</cucumber.version>
         <jacoco.version>0.8.13</jacoco.version>
         <jib.version>3.4.4</jib.version>
@@ -127,7 +131,7 @@
                     <version>${jib.version}</version>
                     <configuration>
                         <from>
-                            <image>gcr.io/distroless/java21-debian12:nonroot</image>
+                            <image>gcr.io/distroless/java21-debian13:nonroot</image>
                         </from>
                         <to>
                             <image>${image.registry}/${project.artifactId}:${image.tag}</image>
