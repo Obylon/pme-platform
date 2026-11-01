@@ -126,6 +126,11 @@ class CommunityApiIT {
                 .andExpect(jsonPath("$.content[0].category").value("FIGURINE"));
         mvc.perform(get("/api/community/listings"))
                 .andExpect(jsonPath("$.totalElements").value(1));
+        mvc.perform(get("/api/community/listings").param("type", "EXCHANGE"))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].type").value("EXCHANGE"));
+        mvc.perform(get("/api/community/listings").param("type", "GIVEAWAY"))
+                .andExpect(jsonPath("$.totalElements").value(0));
     }
 
     @Test
