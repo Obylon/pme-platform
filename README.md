@@ -60,15 +60,23 @@ mvn verify          # unitaires (Surefire) + intégration Testcontainers + accep
 
 ## Déploiement local (Minikube)
 
-Prérequis : Docker, Minikube, kubectl, Helm 3, Java 21, Maven 3.9, jq ; 4 CPU et 12 Go de RAM pour la VM.
+Prérequis : Docker, Minikube, kubectl, Helm 3, Java 21, Maven 3.9, jq ; 4 CPU et 12 Go de RAM (sous WSL 2 : fichier .wslconfig).
+
+En une commande (Linux, macOS, ou Windows avec WSL 2 + Docker Desktop) :
 
 ```bash
-./deploy/scripts/00-cluster.sh
+bash deploy/scripts/up.sh   # cluster, plateforme, données, application, tunnel, pme.local, démo
+```
+
+Étape par étape :
+
+```bash
+./deploy/scripts/00-cluster.sh           # MINIKUBE_MEMORY=9g et MINIKUBE_CPUS=4 par défaut
 minikube tunnel --profile pme            # dans un autre terminal (laisser ouvert)
 ./deploy/scripts/01-platform.sh
 ./deploy/scripts/02-data.sh
 ./deploy/scripts/03-app.sh
-kubectl -n envoy-gateway-system get svc  # EXTERNAL-IP de la Gateway
+kubectl -n envoy-gateway-system get svc  # EXTERNAL-IP de la Gateway (127.0.0.1 avec le pilote Docker)
 echo "<EXTERNAL-IP> pme.local" | sudo tee -a /etc/hosts
 ./deploy/scripts/demo.sh
 ```

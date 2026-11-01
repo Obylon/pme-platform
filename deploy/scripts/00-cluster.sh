@@ -6,7 +6,7 @@ set -euo pipefail
 minikube start \
   --profile pme \
   --kubernetes-version=v1.34.0 \
-  --cpus=4 --memory=12g --disk-size=40g \
+  --cpus="${MINIKUBE_CPUS:-4}" --memory="${MINIKUBE_MEMORY:-9g}" --disk-size=40g \
   --cni=calico \
   --addons=metrics-server
 
