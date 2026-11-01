@@ -61,7 +61,7 @@ jobs:
           -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
       - name: Rapports de tests et de couverture
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-reports
           path: |
@@ -104,7 +104,7 @@ jobs:
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: target/dependency-check-report.sarif
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: sca-reports
@@ -201,7 +201,7 @@ jobs:
           cmd_options: "-I"          # échec sur les alertes FAIL uniquement (règles dans .zap/rules.tsv)
           rules_file_name: .zap/rules.tsv
           allow_issue_writing: false
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: dast-report
