@@ -61,8 +61,23 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     ProblemDetail unexpected(Exception ex) {
+        if (isMalformedRequest(ex)) {
+            // Paramètres de requête illisibles (ex. « ?=&page=0 ») rejetés par Tomcat 11 : faute du client, pas du serveur
+            return problem(HttpStatus.BAD_REQUEST, "Requête mal formée");
+        }
         LOG.error("Erreur non gérée", ex);
         return problem(HttpStatus.INTERNAL_SERVER_ERROR, "Erreur interne");
+    }
+
+    /** Détecte, dans la chaîne des causes, une erreur d'analyse de requête levée par le conteneur (relevé OWASP ZAP). */
+    static boolean isMalformedRequest(Throwable ex) {
+        for (Throwable t = ex; t != null; t = t.getCause() == t ? null : t.getCause()) {
+            String name = t.getClass().getName();
+            if (name.endsWith(".InvalidParameterException") || name.endsWith(".BadRequestException")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static ProblemDetail problem(HttpStatus status, String detail) {
