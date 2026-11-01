@@ -29,7 +29,7 @@ jobs:
   secrets-scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with: { fetch-depth: 0 }
       - name: Gitleaks
         run: |
@@ -43,7 +43,7 @@ jobs:
     env:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with: { fetch-depth: 0 }      # historique complet : SonarQube calcule le « nouveau code »
       - uses: actions/setup-java@v6
         with:
@@ -79,7 +79,7 @@ jobs:
       contents: read
       security-events: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-java@v6
         with:
           distribution: temurin
@@ -122,7 +122,7 @@ jobs:
       id-token: write          # signature Cosign sans clé (OIDC GitHub -> Sigstore)
       security-events: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-java@v6
         with:
           distribution: temurin
@@ -178,7 +178,7 @@ jobs:
         options: >-
           --health-cmd "pg_isready -U shop" --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-java@v6
         with:
           distribution: temurin
@@ -217,7 +217,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Mise à jour du tag d'image dans le chart
         run: |
           REGISTRY="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}"
