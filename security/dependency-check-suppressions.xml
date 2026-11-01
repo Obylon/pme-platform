@@ -14,4 +14,13 @@
         <packageUrl regex="true">^pkg:maven/io\.micrometer/micrometer-registry-prometheus@.*$</packageUrl>
         <cpe>cpe:/a:prometheus:prometheus</cpe>
     </suppress>
+    <suppress until="2027-05-01Z">
+        <notes><![CDATA[
+        KAN-27 - Faux positif : CVE-2025-7962 est une injection SMTP dans Eclipse Angus Mail (cpe angus_mail).
+        angus-activation est l'implémentation de Jakarta Activation (types MIME), sans client SMTP ;
+        aucun service n'envoie de courriel.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.eclipse\.angus/angus-activation@.*$</packageUrl>
+        <cve>CVE-2025-7962</cve>
+    </suppress>
 </suppressions>
