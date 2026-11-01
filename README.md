@@ -4,6 +4,12 @@ Prototype de la plateforme de La Petite Maison de l'Épouvante : espace communau
 boutique en ligne et abonnement au fanzine. Projet individuel CESI – bloc « Superviser et assurer le développement
 des applications logicielles ».
 
+## Suivi du projet
+
+- Backlog : Jira, projet KAN (epics KAN-1 à KAN-3, user stories KAN-4 à KAN-15) – https://tfontep.atlassian.net/browse/KAN-1
+- Pipeline : onglet Actions du dépôt
+- Dossier de conception (phases 1 à 3, soutenance) : Google Drive « projet individuel Cesi »
+
 ## Architecture
 
 | Composant | Rôle | Technologie |
