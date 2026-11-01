@@ -1,6 +1,6 @@
 global:
-  imageRegistry: pme              # ghcr.io/<owner> en CI ; "pme" pour les images construites dans Minikube
-  imageTag: 0.1.0-SNAPSHOT        # mis à jour par le pipeline (GitOps)
+  imageRegistry: ghcr.io/obylon
+  imageTag: 4a7ef5007bdcf79a795631bf6b4c2ac5e2dea0b8
   imagePullPolicy: IfNotPresent
   host: pme.local
   gateway: pme-gateway
