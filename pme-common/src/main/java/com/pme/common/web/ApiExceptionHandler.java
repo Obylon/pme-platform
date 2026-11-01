@@ -72,8 +72,8 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     /** Détecte, dans la chaîne des causes, une erreur d'analyse de requête levée par le conteneur (relevé OWASP ZAP). */
     static boolean isMalformedRequest(Throwable ex) {
         for (Throwable t = ex; t != null; t = t.getCause() == t ? null : t.getCause()) {
-            String name = t.getClass().getName();
-            if (name.endsWith(".InvalidParameterException") || name.endsWith(".BadRequestException")) {
+            String name = t.getClass().getSimpleName();
+            if ("InvalidParameterException".equals(name) || "BadRequestException".equals(name)) {
                 return true;
             }
         }
