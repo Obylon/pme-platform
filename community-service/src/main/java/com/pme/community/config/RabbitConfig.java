@@ -1,6 +1,7 @@
 package com.pme.community.config;
 
 import org.springframework.amqp.core.TopicExchange;
+import org.springframework.amqp.support.converter.DefaultJackson2JavaTypeMapper;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
@@ -20,10 +21,17 @@ public class RabbitConfig {
         return new TopicExchange(EXCHANGE, true, false);
     }
 
+    /**
+     * Seul le package du contrat d'événements est autorisé à la désérialisation
+     * (Spring AMQP refuse par défaut toute classe hors java.lang / java.util).
+     */
     @Bean
     MessageConverter jsonMessageConverter(ObjectMapper objectMapper) {
         Jackson2JsonMessageConverter converter = new Jackson2JsonMessageConverter(objectMapper);
         converter.setCreateMessageIds(true);
+        DefaultJackson2JavaTypeMapper typeMapper = new DefaultJackson2JavaTypeMapper();
+        typeMapper.setTrustedPackages("com.pme.community.domain");
+        converter.setJavaTypeMapper(typeMapper);
         return converter;
     }
 }
