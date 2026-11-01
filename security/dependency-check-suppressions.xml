@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Faux positifs OWASP Dependency-Check. Chaque suppression doit être justifiée,
+  liée à un ticket et réexaminée à sa date d'expiration (attribut until).
+-->
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+</suppressions>

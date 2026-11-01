@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: pme
+  labels:
+    # Pod Security Standards : "baseline" imposé (les images d'opérateurs tiers ne sont pas toutes
+    # conformes à "restricted"), "restricted" audité et signalé. Les pods applicatifs sont "restricted".
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted

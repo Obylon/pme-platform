@@ -1,0 +1,42 @@
+global:
+  imageRegistry: pme              # ghcr.io/<owner> en CI ; "pme" pour les images construites dans Minikube
+  imageTag: 0.1.0-SNAPSHOT        # mis à jour par le pipeline (GitOps)
+  imagePullPolicy: IfNotPresent
+  host: pme.local
+  gateway: pme-gateway
+  oidc:
+    issuerUri: https://pme.local/auth/realms/pme
+    jwkSetUri: http://keycloak.pme.svc.cluster.local:8080/auth/realms/pme/protocol/openid-connect/certs
+    audience: pme-api
+  postgres:
+    host: pme-pg-rw
+    port: 5432
+  rabbitmq:
+    host: pme-rabbit.pme.svc.cluster.local
+    port: 5672
+    secret: pme-rabbit-default-user
+  swaggerUi: true                 # false en production
+
+services:
+  community-service:
+    pathPrefix: /api/community
+    database: community
+    amqp: true
+    replicas: 2
+    autoscaling: { minReplicas: 2, maxReplicas: 5, cpuUtilization: 70 }
+  notification-service:
+    pathPrefix: /api/notifications
+    database: notification
+    amqp: true
+    replicas: 2
+    autoscaling: { minReplicas: 2, maxReplicas: 4, cpuUtilization: 70 }
+  shop-service:
+    pathPrefix: /api/shop
+    database: shop
+    amqp: false
+    replicas: 2
+    autoscaling: { minReplicas: 2, maxReplicas: 6, cpuUtilization: 70 }
+
+resources:
+  requests: { cpu: 250m, memory: 384Mi }
+  limits: { cpu: "1", memory: 768Mi }

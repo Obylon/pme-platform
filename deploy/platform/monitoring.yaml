@@ -1,0 +1,39 @@
+# Alertes associées aux indicateurs qualité en exécution (I4 : performance et disponibilité)
+# et à la détection d'anomalies de sécurité (pics de 401/403).
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: pme-slo
+  namespace: pme
+spec:
+  groups:
+    - name: pme-slo
+      rules:
+        - alert: PmeLatencyP95High
+          expr: |
+            histogram_quantile(0.95, sum by (le, application) (
+              rate(http_server_requests_seconds_bucket{application=~".+-service", uri!~"/actuator.*"}[5m]))) > 0.5
+          for: 5m
+          labels: { severity: warning }
+          annotations:
+            summary: "Latence p95 > 500 ms sur {{ $labels.application }} (SLO I4)"
+        - alert: PmeErrorRateHigh
+          expr: |
+            sum by (application) (rate(http_server_requests_seconds_count{application=~".+-service", status=~"5.."}[5m]))
+              / sum by (application) (rate(http_server_requests_seconds_count{application=~".+-service"}[5m])) > 0.01
+          for: 5m
+          labels: { severity: critical }
+          annotations:
+            summary: "Taux d'erreurs 5xx > 1 % sur {{ $labels.application }} (SLO I4)"
+        - alert: PmeServiceDown
+          expr: up{job=~".+-service"} == 0
+          for: 2m
+          labels: { severity: critical }
+          annotations:
+            summary: "{{ $labels.job }} injoignable (disponibilité I4)"
+        - alert: PmeAuthFailuresSpike
+          expr: sum(rate(http_server_requests_seconds_count{application=~".+-service", status=~"401|403"}[5m])) > 5
+          for: 5m
+          labels: { severity: warning }
+          annotations:
+            summary: "Pic de requêtes refusées (401/403) : tentative d'accès non autorisé possible (I3)"

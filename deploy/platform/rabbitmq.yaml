@@ -1,0 +1,15 @@
+# Broker RabbitMQ géré par l'opérateur officiel.
+# Démo : 1 nœud. Expérimentation : replicas: 3 (files quorum répliquées, tolérance à la perte d'un nœud).
+apiVersion: rabbitmq.com/v1beta1
+kind: RabbitmqCluster
+metadata:
+  name: pme-rabbit
+  namespace: pme
+spec:
+  replicas: 1
+  resources:
+    requests: { cpu: 250m, memory: 512Mi }
+    limits: { cpu: "1", memory: 1Gi }
+  rabbitmq:
+    additionalPlugins:
+      - rabbitmq_prometheus

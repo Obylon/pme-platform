@@ -1,0 +1,31 @@
+# Zero trust réseau : tout trafic entrant vers les services applicatifs est interdit,
+# sauf depuis la Gateway (Envoy) et depuis Prometheus (collecte des métriques).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: pme-app-default-deny
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: pme
+  policyTypes: ["Ingress"]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: pme-app-allow-gateway-and-monitoring
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: pme
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: envoy-gateway-system
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - { protocol: TCP, port: 8080 }

@@ -1,0 +1,9 @@
+# Détection de secrets : règles par défaut de Gitleaks.
+# Les mots de passe des comptes de démonstration du realm Keycloak sont des valeurs de test
+# documentées (environnement local uniquement) : fichier exclu.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Valeurs de test du realm de démonstration"
+paths = ['''deploy/platform/realm-pme\.json''']

@@ -1,0 +1,94 @@
+# Serveur d'autorisation OIDC. Le realm "pme" est importé au démarrage (realm-pme.json).
+# Seuls les chemins publics sont routés par la Gateway : la console d'administration (/auth/admin)
+# n'est PAS exposée et s'utilise via : kubectl -n pme port-forward svc/keycloak 8080
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+  namespace: pme
+  labels: { app: keycloak }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: keycloak }
+  template:
+    metadata:
+      labels: { app: keycloak }
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: keycloak
+          image: quay.io/keycloak/keycloak:26.4
+          args: ["start", "--import-realm"]
+          env:
+            - { name: KC_DB, value: postgres }
+            - { name: KC_DB_URL, value: "jdbc:postgresql://pme-pg-rw:5432/keycloak" }
+            - name: KC_DB_USERNAME
+              valueFrom: { secretKeyRef: { name: pg-keycloak, key: username } }
+            - name: KC_DB_PASSWORD
+              valueFrom: { secretKeyRef: { name: pg-keycloak, key: password } }
+            - { name: KC_HOSTNAME, value: "https://pme.local/auth" }
+            - { name: KC_HTTP_ENABLED, value: "true" }          # TLS terminé par la Gateway
+            - { name: KC_HTTP_RELATIVE_PATH, value: "/auth" }
+            - { name: KC_PROXY_HEADERS, value: xforwarded }
+            - { name: KC_HEALTH_ENABLED, value: "true" }
+            - { name: KC_METRICS_ENABLED, value: "true" }
+            - name: KC_BOOTSTRAP_ADMIN_USERNAME
+              valueFrom: { secretKeyRef: { name: keycloak-admin, key: username } }
+            - name: KC_BOOTSTRAP_ADMIN_PASSWORD
+              valueFrom: { secretKeyRef: { name: keycloak-admin, key: password } }
+          ports:
+            - { name: http, containerPort: 8080 }
+            - { name: management, containerPort: 9000 }
+          readinessProbe:
+            httpGet: { path: /auth/health/ready, port: management }
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /auth/health/live, port: management }
+            initialDelaySeconds: 90
+            periodSeconds: 20
+          resources:
+            requests: { cpu: 250m, memory: 768Mi }
+            limits: { cpu: "1", memory: 1536Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: { drop: ["ALL"] }
+          volumeMounts:
+            - { name: realm, mountPath: /opt/keycloak/data/import, readOnly: true }
+      volumes:
+        - name: realm
+          configMap: { name: keycloak-realm }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak
+  namespace: pme
+  labels: { app: keycloak }
+spec:
+  selector: { app: keycloak }
+  ports:
+    - { name: http, port: 8080, targetPort: http }
+    - { name: management, port: 9000, targetPort: management }
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: keycloak
+  namespace: pme
+spec:
+  parentRefs:
+    - name: pme-gateway
+      sectionName: https
+  hostnames: ["pme.local"]
+  rules:
+    - matches:
+        - path: { type: PathPrefix, value: /auth/realms/ }
+        - path: { type: PathPrefix, value: /auth/resources/ }
+        - path: { type: PathPrefix, value: /auth/js/ }
+      backendRefs:
+        - name: keycloak
+          port: 8080

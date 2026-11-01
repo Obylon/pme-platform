@@ -1,0 +1,226 @@
+# Pipeline CI/CD DevSecOps de petitemaisonepouvante.com
+# PR vers main  : contrôles qualité et sécurité bloquants, aucun déploiement.
+# Push sur main : idem + publication de l'image signée + mise à jour GitOps (Argo CD déploie).
+name: ci-cd
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 2 * * *"        # scan de vulnérabilités nocturne
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  JAVA_VERSION: "21"
+  MAVEN_ARGS: "-B -ntp"
+  SERVICES: "community-service notification-service shop-service"
+
+jobs:
+  # 1. Détection de secrets dans l'historique (I3)
+  secrets-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Gitleaks
+        run: |
+          docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:latest \
+            detect --source /repo --config /repo/.gitleaks.toml --redact --verbose
+
+  # 2-6. Build, tests unitaires / intégration / acceptation, couverture, SonarQube (I1, I2, I3)
+  build-test:
+    runs-on: ubuntu-latest
+    needs: secrets-scan
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }      # historique complet : SonarQube calcule le « nouveau code »
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+      - name: Build + tests unitaires (Surefire) + intégration et acceptation (Failsafe, Testcontainers, Cucumber)
+        run: mvn $MAVEN_ARGS verify
+      - name: Analyse SonarQube + quality gate bloquant
+        if: ${{ env.SONAR_TOKEN != '' }}
+        run: >
+          mvn $MAVEN_ARGS org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+          -Dsonar.host.url=${{ vars.SONAR_HOST_URL || 'https://sonarcloud.io' }}
+          -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
+          -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
+      - name: Rapports de tests et de couverture
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            **/target/surefire-reports/
+            **/target/failsafe-reports/
+            **/target/site/jacoco-merged/
+            **/target/cucumber-report.html
+          retention-days: 14
+
+  # 7. Analyse des dépendances (SCA) + SBOM (I3)
+  sca:
+    runs-on: ubuntu-latest
+    needs: secrets-scan
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+      - name: Cache de la base NVD
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository/org/owasp/dependency-check-data
+          key: nvd-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: nvd-${{ runner.os }}-
+      - name: OWASP Dependency-Check (échec si CVSS >= 7)
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: mvn $MAVEN_ARGS -DskipTests install org.owasp:dependency-check-maven:aggregate
+      - name: SBOM CycloneDX
+        if: always()
+        run: mvn $MAVEN_ARGS org.cyclonedx:cyclonedx-maven-plugin:makeAggregateBom
+      - name: Publication SARIF (onglet Security de GitHub)
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: target/dependency-check-report.sarif
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sca-reports
+          path: |
+            target/dependency-check-report.html
+            target/bom.json
+
+  # 8-10. Images distroless, scan Trivy, publication signée (I3)
+  image:
+    runs-on: ubuntu-latest
+    needs: [build-test, sca]
+    permissions:
+      contents: read
+      packages: write
+      id-token: write          # signature Cosign sans clé (OIDC GitHub -> Sigstore)
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+      - name: Registre en minuscules
+        run: echo "REGISTRY=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
+      - name: Construction des images (Jib, distroless, non-root)
+        run: mvn $MAVEN_ARGS -DskipTests package jib:dockerBuild -Dimage.registry=$REGISTRY -Dimage.tag=${{ github.sha }}
+      - name: Scan Trivy des images (échec sur CRITICAL/HIGH corrigeables)
+        run: |
+          for s in $SERVICES; do
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image \
+              --exit-code 1 --severity CRITICAL,HIGH --ignore-unfixed "$REGISTRY/$s:${{ github.sha }}"
+          done
+      - name: Scan Trivy de la configuration Kubernetes / Helm (mauvaises configurations)
+        run: |
+          docker run --rm -v "$PWD:/src" aquasec/trivy:latest config --severity CRITICAL,HIGH \
+            --format sarif --output /src/trivy-config.sarif /src/deploy
+      - name: Publication SARIF Trivy
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-config.sarif
+          category: trivy-config
+      - name: Connexion à GHCR
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      - uses: sigstore/cosign-installer@v3
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      - name: Publication et signature des images
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          for s in $SERVICES; do
+            docker push "$REGISTRY/$s:${{ github.sha }}"
+            DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' "$REGISTRY/$s:${{ github.sha }}")
+            cosign sign --yes "$DIGEST"
+          done
+
+  # 13. Test dynamique de sécurité (DAST) sur l'API en exécution (I3)
+  dast:
+    runs-on: ubuntu-latest
+    needs: build-test
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: shop
+          POSTGRES_USER: shop
+          POSTGRES_PASSWORD: shop
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U shop" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+      - name: Démarrage de shop-service
+        run: |
+          mvn $MAVEN_ARGS -DskipTests -pl shop-service -am package
+          java -jar shop-service/target/shop-service-*-SNAPSHOT.jar > shop.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -fs http://localhost:8080/actuator/health/readiness && break
+            sleep 2
+          done
+      - name: OWASP ZAP - scan de l'API à partir du contrat OpenAPI
+        uses: zaproxy/action-api-scan@v0.9.0
+        with:
+          target: http://localhost:8080/v3/api-docs
+          format: openapi
+          fail_action: true
+          cmd_options: "-I"          # échec sur les alertes FAIL uniquement (règles dans .zap/rules.tsv)
+          rules_file_name: .zap/rules.tsv
+          allow_issue_writing: false
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dast-report
+          path: |
+            report_html.html
+            shop.log
+
+  # 11-12. Mise à jour GitOps : Argo CD synchronise le cluster à partir du dépôt
+  gitops:
+    runs-on: ubuntu-latest
+    needs: [image, dast]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Mise à jour du tag d'image dans le chart
+        run: |
+          REGISTRY="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}"
+          sed -i "s#^  imageRegistry: .*#  imageRegistry: ${REGISTRY}#" deploy/helm/pme-app/values.yaml
+          sed -i "s#^  imageTag: .*#  imageTag: ${{ github.sha }}#" deploy/helm/pme-app/values.yaml
+          git config user.name "pme-ci"
+          git config user.email "ci@users.noreply.github.com"
+          git commit -am "deploy: pme-app ${{ github.sha }} [skip ci]" && git push || echo "Rien à mettre à jour"

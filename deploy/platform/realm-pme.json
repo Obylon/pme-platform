@@ -1,0 +1,95 @@
+{
+  "realm": "pme",
+  "displayName": "La Petite Maison de l'Épouvante",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": true,
+  "registrationEmailAsUsername": false,
+  "loginWithEmailAllowed": true,
+  "resetPasswordAllowed": true,
+  "verifyEmail": false,
+  "bruteForceProtected": true,
+  "failureFactor": 5,
+  "waitIncrementSeconds": 60,
+  "maxFailureWaitSeconds": 900,
+  "passwordPolicy": "length(12) and notUsername and upperCase(1) and lowerCase(1) and digits(1)",
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "roles": {
+    "realm": [
+      { "name": "member", "description": "Membre inscrit : achats, troc, notifications" },
+      { "name": "moderator", "description": "Modération de l'espace communautaire" },
+      { "name": "admin", "description": "Administration de la plateforme" },
+      {
+        "name": "default-roles-pme",
+        "description": "Rôles attribués à tout nouvel inscrit",
+        "composite": true,
+        "composites": { "realm": ["member"] }
+      }
+    ]
+  },
+  "defaultRole": { "name": "default-roles-pme", "composite": true },
+  "clients": [
+    {
+      "clientId": "pme-web",
+      "name": "Front-end petitemaisonepouvante.com",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "implicitFlowEnabled": false,
+      "redirectUris": ["https://pme.local/*"],
+      "webOrigins": ["https://pme.local"],
+      "attributes": { "pkce.code.challenge.method": "S256", "post.logout.redirect.uris": "https://pme.local/*" },
+      "protocolMappers": [
+        {
+          "name": "audience-pme-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": { "included.custom.audience": "pme-api", "access.token.claim": "true", "id.token.claim": "false" }
+        }
+      ]
+    },
+    {
+      "clientId": "pme-demo",
+      "name": "Client de démonstration et de tests de charge (direct grant) - à supprimer en production",
+      "publicClient": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "protocolMappers": [
+        {
+          "name": "audience-pme-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": { "included.custom.audience": "pme-api", "access.token.claim": "true", "id.token.claim": "false" }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "alice", "enabled": true, "email": "alice@pme.local", "emailVerified": true,
+      "firstName": "Alice", "lastName": "Demo",
+      "credentials": [{ "type": "password", "value": "Alice-Demo-2026", "temporary": false }],
+      "realmRoles": ["member"]
+    },
+    {
+      "username": "bob", "enabled": true, "email": "bob@pme.local", "emailVerified": true,
+      "firstName": "Bob", "lastName": "Demo",
+      "credentials": [{ "type": "password", "value": "Bob-Demo-2026", "temporary": false }],
+      "realmRoles": ["member"]
+    },
+    {
+      "username": "carol", "enabled": true, "email": "carol@pme.local", "emailVerified": true,
+      "firstName": "Carol", "lastName": "Demo",
+      "credentials": [{ "type": "password", "value": "Carol-Demo-2026", "temporary": false }],
+      "realmRoles": ["member"]
+    },
+    {
+      "username": "modo", "enabled": true, "email": "modo@pme.local", "emailVerified": true,
+      "firstName": "Modo", "lastName": "Demo",
+      "credentials": [{ "type": "password", "value": "Modo-Demo-2026!", "temporary": false }],
+      "realmRoles": ["member", "moderator"],
+      "requiredActions": []
+    }
+  ]
+}

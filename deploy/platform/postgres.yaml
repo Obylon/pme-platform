@@ -1,0 +1,56 @@
+# Cluster PostgreSQL géré par l'opérateur CloudNativePG.
+# Démo : 1 instance. Expérimentation haute disponibilité : instances: 3 (1 primaire + 2 réplicas,
+# bascule automatique). Chaque service a sa base et son rôle dédiés (moindre privilège).
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: pme-pg
+  namespace: pme
+spec:
+  instances: 1
+  storage:
+    size: 5Gi
+  postgresql:
+    parameters:
+      max_connections: "200"
+      log_min_duration_statement: "500"   # journalise les requêtes lentes (> 500 ms)
+  monitoring:
+    enablePodMonitor: true
+  managed:
+    roles:
+      - name: community
+        ensure: present
+        login: true
+        passwordSecret: { name: pg-community }
+      - name: notification
+        ensure: present
+        login: true
+        passwordSecret: { name: pg-notification }
+      - name: shop
+        ensure: present
+        login: true
+        passwordSecret: { name: pg-shop }
+      - name: keycloak
+        ensure: present
+        login: true
+        passwordSecret: { name: pg-keycloak }
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata: { name: db-community, namespace: pme }
+spec: { name: community, owner: community, cluster: { name: pme-pg } }
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata: { name: db-notification, namespace: pme }
+spec: { name: notification, owner: notification, cluster: { name: pme-pg } }
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata: { name: db-shop, namespace: pme }
+spec: { name: shop, owner: shop, cluster: { name: pme-pg } }
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata: { name: db-keycloak, namespace: pme }
+spec: { name: keycloak, owner: keycloak, cluster: { name: pme-pg } }

@@ -1,0 +1,152 @@
+{{- $root := . -}}
+{{- range $name, $svc := .Values.services }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "pme.labels" (dict "name" $name) | nindent 4 }}
+spec:
+  replicas: {{ $svc.replicas }}
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }   # déploiement sans interruption
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ $name }}
+  template:
+    metadata:
+      labels:
+        {{- include "pme.labels" (dict "name" $name) | nindent 8 }}
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile: { type: RuntimeDefault }
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: {{ $name }}
+      containers:
+        - name: app
+          image: "{{ $root.Values.global.imageRegistry }}/{{ $name }}:{{ $root.Values.global.imageTag }}"
+          imagePullPolicy: {{ $root.Values.global.imagePullPolicy }}
+          ports:
+            - { name: http, containerPort: 8080 }
+          env:
+            - { name: DB_URL, value: "jdbc:postgresql://{{ $root.Values.global.postgres.host }}:{{ $root.Values.global.postgres.port }}/{{ $svc.database }}" }
+            - name: DB_USERNAME
+              valueFrom: { secretKeyRef: { name: "pg-{{ $svc.database }}", key: username } }
+            - name: DB_PASSWORD
+              valueFrom: { secretKeyRef: { name: "pg-{{ $svc.database }}", key: password } }
+            - { name: OIDC_ISSUER_URI, value: {{ $root.Values.global.oidc.issuerUri | quote }} }
+            - { name: OIDC_JWK_SET_URI, value: {{ $root.Values.global.oidc.jwkSetUri | quote }} }
+            - { name: OIDC_AUDIENCE, value: {{ $root.Values.global.oidc.audience | quote }} }
+            - { name: SWAGGER_UI_ENABLED, value: {{ $root.Values.global.swaggerUi | quote }} }
+            {{- if $svc.amqp }}
+            - { name: RABBITMQ_HOST, value: {{ $root.Values.global.rabbitmq.host | quote }} }
+            - { name: RABBITMQ_PORT, value: {{ $root.Values.global.rabbitmq.port | quote }} }
+            - name: RABBITMQ_USERNAME
+              valueFrom: { secretKeyRef: { name: {{ $root.Values.global.rabbitmq.secret }}, key: username } }
+            - name: RABBITMQ_PASSWORD
+              valueFrom: { secretKeyRef: { name: {{ $root.Values.global.rabbitmq.secret }}, key: password } }
+            {{- end }}
+          startupProbe:
+            httpGet: { path: /actuator/health/liveness, port: http }
+            periodSeconds: 5
+            failureThreshold: 30
+          livenessProbe:
+            httpGet: { path: /actuator/health/liveness, port: http }
+            periodSeconds: 10
+          readinessProbe:
+            httpGet: { path: /actuator/health/readiness, port: http }
+            periodSeconds: 5
+          resources:
+            {{- toYaml $root.Values.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          volumeMounts:
+            - { name: tmp, mountPath: /tmp }
+      volumes:
+        - name: tmp
+          emptyDir: { sizeLimit: 64Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "pme.labels" (dict "name" $name) | nindent 4 }}
+spec:
+  selector:
+    app.kubernetes.io/name: {{ $name }}
+  ports:
+    - { name: http, port: 8080, targetPort: http }
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ $name }}
+spec:
+  parentRefs:
+    - name: {{ $root.Values.global.gateway }}
+      sectionName: https
+  hostnames: [{{ $root.Values.global.host | quote }}]
+  rules:
+    - matches:
+        - path: { type: PathPrefix, value: {{ $svc.pathPrefix }} }
+      backendRefs:
+        - name: {{ $name }}
+          port: 8080
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ $name }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ $name }}
+  minReplicas: {{ $svc.autoscaling.minReplicas }}
+  maxReplicas: {{ $svc.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: { type: Utilization, averageUtilization: {{ $svc.autoscaling.cpuUtilization }} }
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ $name }}
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ $name }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ $name }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ $name }}
+  endpoints:
+    - port: http
+      path: /actuator/prometheus
+      interval: 15s
+{{- end }}

@@ -1,0 +1,24 @@
+# Déploiement GitOps : Argo CD (installé dans le cluster) surveille le dépôt et applique le chart.
+# Le pipeline CI ne pousse jamais vers le cluster : il met à jour global.imageTag dans values.yaml.
+# Installation : kubectl create ns argocd && kubectl apply -n argocd \
+#   -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: pme-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/CHANGE_ME/pme-platform.git
+    targetRevision: main
+    path: deploy/helm/pme-app
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: pme
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ServerSideApply=true

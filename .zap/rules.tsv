@@ -1,0 +1,6 @@
+10021	FAIL	(X-Content-Type-Options manquant)
+10020	FAIL	(Anti-clickjacking manquant)
+10038	WARN	(Content Security Policy absente - API JSON)
+40018	FAIL	(Injection SQL)
+40012	FAIL	(XSS réfléchi)
+90019	FAIL	(Injection de code côté serveur)
