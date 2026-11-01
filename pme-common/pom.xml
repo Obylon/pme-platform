@@ -11,6 +11,11 @@
     <artifactId>pme-common</artifactId>
     <name>pme-common (sécurité et gestion d'erreurs partagées)</name>
 
+    <properties>
+        <!-- Bibliothèque partagée : pas d image conteneur -->
+        <jib.skip>true</jib.skip>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
