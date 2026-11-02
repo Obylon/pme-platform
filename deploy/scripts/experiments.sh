@@ -38,6 +38,13 @@ queue_depth() { # nom de file
     | awk -v q="$1" '$1 == q { print $2 }'
 }
 
+reachable() { curl -sk -o /dev/null --max-time 5 "https://$HOST/api/shop/products"; }
+ensure_up() { # attend que la Gateway réponde (60 s), sinon arrête le script
+  for _ in $(seq 1 30); do reachable && return 0; sleep 2; done
+  echo; echo "https://$HOST ne répond plus : vérifiez la fenêtre du tunnel (sudo -v puis minikube tunnel -p pme --cleanup) et relancez."
+  exit 1
+}
+ensure_up
 ALICE=$(token alice Alice-Demo-2026); BOB=$(token bob Bob-Demo-2026); MODO=$(token modo 'Modo-Demo-2026!')
 [ -n "$ALICE" ] && [ -n "$BOB" ] && [ -n "$MODO" ] || { echo "Impossible d'obtenir les jetons : la plateforme répond-elle sur https://$HOST ?"; exit 1; }
 
@@ -49,16 +56,10 @@ record E1 "Émetteur du certificat" "PME Local Root CA" "${issuer:-aucun}" "$(ec
 if echo | openssl s_client -connect "$HOST:443" -servername "$HOST" -tls1_1 -cipher 'DEFAULT@SECLEVEL=0' >/dev/null 2>&1; then t11="accepté"; else t11="refusé"; fi
 if echo | openssl s_client -connect "$HOST:443" -servername "$HOST" -tls1_2 >/dev/null 2>&1; then t12="accepté"; else t12="refusé"; fi
 record E1 "TLS 1.1 / TLS 1.2" "refusé / accepté" "$t11 / $t12" "$([ "$t11/$t12" = "refusé/accepté" ] && echo OK || echo KO)"
-kubectl -n "$NS" delete secret pme-tls --wait=true >/dev/null 2>&1
-start=$(date +%s); recreated="non recréé en 120 s"
-for _ in $(seq 1 120); do
-  if kubectl -n "$NS" get secret pme-tls >/dev/null 2>&1; then recreated="$(( $(date +%s) - start )) s"; break; fi
-  sleep 1
-done
-record E1 "Recréation automatique de pme-tls" "< 30 s" "$recreated" "$([[ "$recreated" =~ ^[0-9]+\ s$ ]] && [ "${recreated% s}" -lt 30 ] && echo OK || echo KO)"
 burst=$(seq 3000 | xargs -P 100 -I{} curl -sk -o /dev/null -w '%{http_code}\n' --max-time 20 "https://$HOST/api/shop/products" | sort | uniq -c | awk '{printf "%s×%s ", $1, $2}')
 record E1 "Rafale de 3000 requêtes (100 en parallèle)" "429 au-delà de 1000 req/s" "$burst" "$(echo "$burst" | grep -q '429' && echo OK || echo 'seuil non atteint')"
 
+ensure_up
 echo "===== E2 - RabbitMQ ====="
 before=$(notif_count "$BOB"); t0=$(now_ms)
 publish "$ALICE" "E2 délai orc $(date +%s)" >/dev/null
@@ -92,6 +93,7 @@ for _ in $(seq 1 60); do after=$(notif_count "$BOB"); [ "$after" -ge $((before +
 record E2 "Consommateur arrêté, 3 publications" "3 en attente puis consommés" "${waiting:-?} en attente, $((after - before)) notifications reçues" "$([ "${waiting:-0}" -ge 3 ] && [ $((after - before)) -ge 3 ] && echo OK || echo KO)"
 record E2 "Perte d'un nœud RabbitMQ (3 nœuds)" "0 message perdu" "non exécuté (1 nœud sur le poste de démo)" "-"
 
+ensure_up
 echo "===== E3 - Keycloak et Spring Security ====="
 c=$(code -X POST "https://$HOST/api/community/listings" -H 'Content-Type: application/json' -d '{}')
 record E3 "Annonce sans jeton" "401" "$c" "$(verdict "$c" 401)"
@@ -111,6 +113,7 @@ c=$(code "https://$HOST/auth/admin/")
 record E3 "Console d'administration Keycloak" "404 (non routée)" "$c" "$(verdict "$c" 404)"
 claims=$(echo "$BOB" | cut -d. -f2 | tr '_-' '/+' | base64 -d 2>/dev/null | jq -c '{iss, aud, roles: .realm_access.roles}' 2>/dev/null)
 record E3 "Contenu du jeton de Bob" "iss public, aud pme-api, rôle member" "${claims:-illisible}" "$(echo "$claims" | grep -q pme-api && echo OK || echo KO)"
+ensure_up
 for _ in 1 2 3 4 5 6; do token carol mauvais-mot-de-passe >/dev/null; done
 locked=$(token carol Carol-Demo-2026)
 record E3 "6 mots de passe erronés pour carol" "compte bloqué" "$([ -z "$locked" ] && echo 'bon mot de passe refusé (bloqué)' || echo 'non bloqué')" "$([ -z "$locked" ] && echo OK || echo KO)"
@@ -122,6 +125,7 @@ else
   record E3 "Jeton expiré" "401" "non exécuté (FULL=1)" "-"
 fi
 
+ensure_up
 echo "===== E5 - Prometheus et Grafana ====="
 kubectl -n monitoring port-forward svc/monitoring-kube-prometheus-prometheus 9090:9090 >/dev/null 2>&1 & PF_PIDS+=($!); sleep 4
 prom() { curl -s --get http://localhost:9090/api/v1/query --data-urlencode "query=$1"; }
@@ -143,6 +147,15 @@ else
   record E5 "Alerte PmeServiceDown" "~2 min" "non exécuté (FULL=1)" "-"
 fi
 
+echo "===== E1 (fin) - Renouvellement du certificat ====="
+kubectl -n "$NS" delete secret pme-tls --wait=true >/dev/null 2>&1
+start=$(date +%s); recreated="non recréé en 120 s"
+for _ in $(seq 1 120); do
+  if kubectl -n "$NS" get secret pme-tls >/dev/null 2>&1; then recreated="$(( $(date +%s) - start )) s"; break; fi
+  sleep 1
+done
+record E1 "Recréation automatique de pme-tls" "< 30 s" "$recreated" "$([[ "$recreated" =~ ^[0-9]+\ s$ ]] && [ "${recreated% s}" -lt 30 ] && echo OK || echo KO)"
+echo "  (attente du rechargement du certificat par Envoy)"; ensure_up
 record E6 "Bascule PostgreSQL (3 instances)" "< 30 s, reconnexion" "non exécuté (mémoire du poste de démo)" "-"
 
 {
