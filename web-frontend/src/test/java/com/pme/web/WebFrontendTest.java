@@ -37,7 +37,7 @@ class WebFrontendTest {
     void indexPageContentIsServedWithoutCache() throws Exception {
         mvc.perform(get("/index.html"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("petitemaisonepouvante")))
+                .andExpect(content().string(containsString("Petite Maison")))
                 .andExpect(header().string("Cache-Control", "no-cache"));
     }
 
