@@ -12,6 +12,12 @@
     <name>community-service (annonces de troc et de dons, modération)</name>
 
     <dependencies>
+        <!-- ESSAI E4 (Phase 2.2) : dépendance vulnérable volontaire (CVE-2022-42889, CVSS 9.8). Ne pas fusionner. -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-text</artifactId>
+            <version>1.9</version>
+        </dependency>
         <dependency>
             <groupId>com.petitemaisonepouvante</groupId>
             <artifactId>pme-common</artifactId>
