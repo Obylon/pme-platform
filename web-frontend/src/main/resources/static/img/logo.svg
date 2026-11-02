@@ -1,8 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="La Petite Maison de l’Épouvante">
-  <rect width="64" height="64" rx="12" fill="#17151C"/>
-  <path d="M12 52V28L32 12l20 16v24z" fill="#E07A3A"/>
-  <path d="M26 52V38h12v14z" fill="#17151C"/>
-  <circle cx="25" cy="29" r="3" fill="#17151C"/>
-  <circle cx="39" cy="29" r="3" fill="#17151C"/>
-  <path d="M8 52h48" stroke="#F4F1EA" stroke-width="3" stroke-linecap="round"/>
+  <rect width="64" height="64" rx="12" fill="#0E0C10"/>
+  <circle cx="51" cy="12" r="7" fill="#EDE6D8"/>
+  <circle cx="54.5" cy="10" r="6" fill="#0E0C10"/>
+  <path d="M40 22V9h6v18z" fill="#F2A03D"/>
+  <path d="M10 58V31L32 12l22 19v27z" fill="#F2A03D"/>
+  <ellipse cx="24.5" cy="35" rx="4.2" ry="5.2" fill="#0E0C10"/>
+  <ellipse cx="39.5" cy="35.5" rx="3.6" ry="4.4" fill="#0E0C10"/>
+  <path d="M26 58V49a6 6 0 0 1 12 0v9z" fill="#0E0C10"/>
 </svg>

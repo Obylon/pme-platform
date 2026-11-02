@@ -3,26 +3,41 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>La Petite Maison de l’Épouvante – petitemaisonepouvante.com</title>
-  <meta name="description" content="Troc et dons entre passionnés d’horreur, boutique en ligne et abonnement au fanzine de La Petite Maison de l’Épouvante.">
+  <meta name="theme-color" content="#0E0C10">
+  <title>La Petite Maison de l’Épouvante – le lieu de rêve pour frissonner</title>
+  <meta name="description" content="Troc et dons entre passionnés, éditions limitées du collectif Evil Ed, boutique et abonnement au fanzine de La Petite Maison de l’Épouvante.">
   <link rel="icon" href="img/logo.svg" type="image/svg+xml">
+  <link rel="preload" href="fonts/anton-400.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/app.css">
   <script type="module" src="js/app.js"></script>
 </head>
 <body>
   <a class="skip-link" href="#contenu">Aller au contenu</a>
+
+  <!-- Ambiance : fantômes translucides qui traversent la page de temps en temps (décoratifs, désactivés si l'utilisateur réduit les animations) -->
+  <div class="fantomes" aria-hidden="true">
+    <div class="fantome f1"><svg width="110" height="128" viewBox="0 0 60 70"><path d="M8 66V28a22 22 0 0 1 44 0v38l-7-6-7.5 6-7.5-6-7.5 6-7.5-6z" fill="#EDE6D8"/><ellipse cx="23" cy="30" rx="4" ry="6" fill="#0E0C10"/><ellipse cx="37" cy="30" rx="4" ry="6" fill="#0E0C10"/><ellipse cx="30" cy="45" rx="3.5" ry="4.5" fill="#0E0C10"/></svg></div>
+    <div class="fantome f2"><svg width="84" height="98" viewBox="0 0 60 70"><path d="M8 66V28a22 22 0 0 1 44 0v38l-7-6-7.5 6-7.5-6-7.5 6-7.5-6z" fill="#EDE6D8"/><ellipse cx="23" cy="30" rx="4" ry="6" fill="#0E0C10"/><ellipse cx="37" cy="30" rx="4" ry="6" fill="#0E0C10"/><ellipse cx="30" cy="45" rx="3.5" ry="4.5" fill="#0E0C10"/></svg></div>
+    <div class="fantome f3"><svg width="66" height="77" viewBox="0 0 60 70"><path d="M8 66V28a22 22 0 0 1 44 0v38l-7-6-7.5 6-7.5-6-7.5 6-7.5-6z" fill="#EDE6D8"/><ellipse cx="23" cy="30" rx="4" ry="6" fill="#0E0C10"/><ellipse cx="37" cy="30" rx="4" ry="6" fill="#0E0C10"/><ellipse cx="30" cy="45" rx="3.5" ry="4.5" fill="#0E0C10"/></svg></div>
+  </div>
+
   <header class="site-header">
     <div class="wrap header-row">
-      <a class="brand" href="#/" aria-label="Accueil petitemaisonepouvante.com">
-        <img src="img/logo.svg" alt="" width="40" height="40">
-        <span>La Petite Maison<br><strong>de l’Épouvante</strong></span>
+      <a class="brand" href="#/" aria-label="Accueil – La Petite Maison de l’Épouvante">
+        <svg class="logo" width="44" height="44" viewBox="0 0 64 64" aria-hidden="true">
+          <circle cx="51" cy="12" r="7" fill="#EDE6D8"/><circle cx="54.5" cy="10" r="6" fill="#0E0C10"/>
+          <path d="M40 22V9h6v18z" fill="#F2A03D"/><path d="M10 58V31L32 12l22 19v27z" fill="#F2A03D"/>
+          <ellipse class="yeux" cx="24.5" cy="35" rx="4.2" ry="5.2" fill="#0E0C10"/><ellipse class="yeux" cx="39.5" cy="35.5" rx="3.6" ry="4.4" fill="#0E0C10"/>
+          <path d="M26 58V49a6 6 0 0 1 12 0v9z" fill="#0E0C10"/>
+        </svg>
+        <span class="brand-text">La Petite Maison<br><span>de l’Épouvante</span></span>
       </a>
       <nav aria-label="Navigation principale">
         <ul class="nav">
           <li><a href="#/troc" data-route="troc">Troc et dons</a></li>
           <li><a href="#/boutique" data-route="boutique">Boutique</a></li>
           <li><a href="#/abonnement" data-route="abonnement">Fanzine</a></li>
-          <li><a href="#/notifications" data-route="notifications">Mes alertes <span class="badge" id="notif-count" hidden></span></a></li>
+          <li><a href="#/notifications" data-route="notifications">Alertes <span class="badge" id="notif-count" hidden></span></a></li>
         </ul>
       </nav>
       <div class="account" id="account"></div>
@@ -36,8 +51,9 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <footer class="site-footer">
-    <div class="wrap">
-      <p>petitemaisonepouvante.com v1 – prototype. Paiement simulé : aucune donnée bancaire n’est demandée.</p>
+    <div class="wrap footer-row">
+      <p>© La Petite Maison de l’Épouvante · Angoulême, Aix-en-Provence, Lyon · The Little House of Thrill, Londres</p>
+      <p>Prototype v1 : paiement simulé, aucune donnée bancaire demandée · Données hébergées dans l’Union européenne</p>
     </div>
   </footer>
 </body>
