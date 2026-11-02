@@ -1,6 +1,6 @@
 global:
   imageRegistry: ghcr.io/obylon
-  imageTag: c3e5112c0353d24122dc32b2e9f4f1680f9b3f6d
+  imageTag: ffcf4d79031062f41088e8fb5b57cbf1a64cd3cc
   imagePullPolicy: IfNotPresent
   host: pme.local
   gateway: pme-gateway
