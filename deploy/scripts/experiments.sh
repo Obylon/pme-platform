@@ -21,7 +21,7 @@ record() { # id essai attendu observé verdict
   printf '  %-3s %-45s attendu: %-28s observé: %s [%s]\n' "$1" "$2" "$3" "$4" "$5"
 }
 verdict() { [ "$1" = "$2" ] && echo OK || echo KO; }
-now_ms() { date +%s%3N; }
+now_ms() { local t="${EPOCHREALTIME/,/.}"; echo $(( ${t%.*} * 1000 + 10#${t#*.} / 1000 )); }  # sans date +%3N (non géré partout)
 token() { # utilisateur mot_de_passe
   "${CURL[@]}" "https://$HOST/auth/realms/pme/protocol/openid-connect/token" \
     -d grant_type=password -d client_id=pme-demo -d username="$1" -d password="$2" | jq -r '.access_token // empty'
