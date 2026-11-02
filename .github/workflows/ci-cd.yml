@@ -34,7 +34,9 @@ jobs:
       - name: Gitleaks
         run: |
           docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:latest \
-            detect --source /repo --config /repo/.gitleaks.toml --redact --verbose
+            detect --source /repo --config /repo/.gitleaks.toml --redact --verbose --log-opts="HEAD"
+        # --log-opts=HEAD : historique de la branche analysée uniquement (par défaut, gitleaks lit
+        # toutes les branches récupérées : un secret sur une autre branche faisait échouer chaque PR)
 
   # 2-6. Build, tests unitaires / intégration / acceptation, couverture, SonarQube (I1, I2, I3)
   build-test:
