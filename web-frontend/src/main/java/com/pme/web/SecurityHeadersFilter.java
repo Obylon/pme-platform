@@ -17,7 +17,8 @@ import jakarta.servlet.http.HttpServletResponse;
  *       (les API et Keycloak sont servis par la même Gateway), aucun script en ligne, pas d'intégration
  *       dans un cadre tiers ;</li>
  *   <li>pas de détection de type MIME, référent minimal, fonctions du navigateur inutiles désactivées ;</li>
- *   <li>la page d'accueil n'est jamais mise en cache, pour qu'une nouvelle version soit prise immédiatement.</li>
+ *   <li>cache : la page d'accueil n'est jamais mise en cache (une nouvelle version est prise immédiatement),
+ *       les scripts, styles et images le sont une heure.</li>
  * </ul>
  * HSTS est ajouté par Spring uniquement en HTTPS ; ici le TLS est terminé par la Gateway, il est donc posé explicitement.
  */
@@ -47,9 +48,8 @@ public class SecurityHeadersFilter extends OncePerRequestFilter {
         response.setHeader("Cross-Origin-Resource-Policy", "same-origin");
         response.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
         String path = request.getRequestURI();
-        if ("/".equals(path) || path.endsWith(".html")) {
-            response.setHeader("Cache-Control", "no-cache");
-        }
+        boolean page = "/".equals(path) || path.endsWith(".html");
+        response.setHeader("Cache-Control", page ? "no-cache" : "max-age=3600");
         chain.doFilter(request, response);
     }
 }

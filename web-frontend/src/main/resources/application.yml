@@ -4,11 +4,6 @@ spring:
   threads:
     virtual:
       enabled: true
-  web:
-    resources:
-      cache:
-        cachecontrol:
-          max-age: 1h
 
 server:
   port: 8080
