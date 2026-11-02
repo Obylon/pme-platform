@@ -19,12 +19,14 @@ des applications logicielles ».
 | community-service | Annonces de troc / don, modération, événement `listing.published` | Spring Boot 4.1, Java 21 |
 | notification-service | Centres d'intérêt, notifications asynchrones, DLQ | Spring Boot 4.1, Spring AMQP |
 | shop-service | Catalogue, panier, commandes (stock concurrent), abonnements | Spring Boot 4.1 |
+| web-frontend | Site web : troc, alertes, boutique, abonnement ; connexion Keycloak (Authorization Code + PKCE) | Spring Boot 4.1 (fichiers statiques, CSP stricte), JavaScript sans dépendance |
 | PostgreSQL | Une base et un rôle par service | CloudNativePG |
 | RabbitMQ | Échange `community.events`, files quorum + DLQ | RabbitMQ Cluster Operator |
 | Observabilité | Métriques, tableaux de bord, alertes SLO | Prometheus, Grafana (kube-prometheus-stack) |
 
 ```
-Client ──HTTPS──> Envoy Gateway ──> /auth/realms/*      Keycloak
+Client ──HTTPS──> Envoy Gateway ──> /                   web-frontend (site)
+                                ├─> /auth/realms/*      Keycloak
                                 ├─> /api/community/*    community-service ──publie──> RabbitMQ
                                 ├─> /api/notifications/* notification-service <──consomme──┘
                                 └─> /api/shop/*         shop-service
@@ -38,6 +40,7 @@ pme-common/            sécurité JWT (rôles Keycloak) et gestion d'erreurs RFC
 community-service/     US-101 à US-104
 notification-service/  US-105, US-106
 shop-service/          US-201 à US-204, US-301, US-302
+web-frontend/          site web (KAN-41) : pages statiques servies avec en-têtes de sécurité
 deploy/scripts/        00-cluster → 01-platform → 02-data → 03-app, demo.sh
 deploy/platform/       Gateway, CA, PostgreSQL, RabbitMQ, Keycloak (+ realm), alertes Prometheus
 deploy/helm/pme-app/   chart des 3 services (pods durcis, HPA, PDB, NetworkPolicies, ServiceMonitor)
@@ -80,6 +83,15 @@ kubectl -n envoy-gateway-system get svc  # EXTERNAL-IP de la Gateway (127.0.0.1 
 echo "<EXTERNAL-IP> pme.local" | sudo tee -a /etc/hosts
 ./deploy/scripts/demo.sh
 ```
+
+### Ouvrir le site
+
+`https://pme.local` dans le navigateur (comptes de démonstration ci-dessous). Sous Windows + WSL 2 :
+
+1. ajouter `127.0.0.1 pme.local` au fichier `C:\Windows\System32\drivers\etc\hosts` (éditeur lancé en administrateur) ;
+2. faire confiance à l'autorité de certification locale :
+   `kubectl -n cert-manager get secret pme-root-ca -o jsonpath='{.data.ca\.crt}' | base64 -d > /mnt/c/Users/$USER/Downloads/pme-ca.crt`,
+   puis double-clic sur le fichier → Installer le certificat → Utilisateur actuel → « Autorités de certification racines de confiance ».
 
 Grafana : `kubectl -n monitoring port-forward svc/monitoring-grafana 3000:80` (identifiants dans le secret
 `monitoring-grafana`). Tableaux de bord à importer : 4701 (JVM Micrometer) et 19004 (Spring Boot).

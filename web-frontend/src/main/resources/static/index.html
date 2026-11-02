@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>La Petite Maison de l’Épouvante – petitemaisonepouvante.com</title>
+  <meta name="description" content="Troc et dons entre passionnés d’horreur, boutique en ligne et abonnement au fanzine de La Petite Maison de l’Épouvante.">
+  <link rel="icon" href="img/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/app.css">
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#contenu">Aller au contenu</a>
+  <header class="site-header">
+    <div class="wrap header-row">
+      <a class="brand" href="#/" aria-label="Accueil petitemaisonepouvante.com">
+        <img src="img/logo.svg" alt="" width="40" height="40">
+        <span>La Petite Maison<br><strong>de l’Épouvante</strong></span>
+      </a>
+      <nav aria-label="Navigation principale">
+        <ul class="nav">
+          <li><a href="#/troc" data-route="troc">Troc et dons</a></li>
+          <li><a href="#/boutique" data-route="boutique">Boutique</a></li>
+          <li><a href="#/abonnement" data-route="abonnement">Fanzine</a></li>
+          <li><a href="#/notifications" data-route="notifications">Mes alertes <span class="badge" id="notif-count" hidden></span></a></li>
+        </ul>
+      </nav>
+      <div class="account" id="account"></div>
+    </div>
+  </header>
+
+  <main id="contenu" tabindex="-1">
+    <p class="loading">Chargement…</p>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <p>petitemaisonepouvante.com v1 – prototype. Paiement simulé : aucune donnée bancaire n’est demandée.</p>
+    </div>
+  </footer>
+</body>
+</html>

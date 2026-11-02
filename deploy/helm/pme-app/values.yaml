@@ -36,6 +36,14 @@ services:
     replicas: 2
     autoscaling: { minReplicas: 2, maxReplicas: 6, cpuUtilization: 70 }
 
+  web-frontend:
+    pathPrefix: /          # site web ; /api/* et /auth/* restent routés vers leurs services (préfixe le plus long)
+    replicas: 1
+    autoscaling: { minReplicas: 1, maxReplicas: 3, cpuUtilization: 70 }
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+
 resources:
   requests: { cpu: 250m, memory: 384Mi }
   limits: { cpu: "1", memory: 768Mi }

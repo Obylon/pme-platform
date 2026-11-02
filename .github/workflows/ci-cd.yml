@@ -22,7 +22,7 @@ permissions:
 env:
   JAVA_VERSION: "21"
   MAVEN_ARGS: "-B -ntp"
-  SERVICES: "community-service notification-service shop-service"
+  SERVICES: "community-service notification-service shop-service web-frontend"
 
 jobs:
   # 1. Détection de secrets dans l'historique (I3)
@@ -37,6 +37,10 @@ jobs:
             detect --source /repo --config /repo/.gitleaks.toml --redact --verbose --log-opts="HEAD"
         # --log-opts=HEAD : historique de la branche analysée uniquement (par défaut, gitleaks lit
         # toutes les branches récupérées : un secret sur une autre branche faisait échouer chaque PR)
+      - name: Validation du chart Helm (lint + rendu)
+        run: |
+          helm lint deploy/helm/pme-app
+          helm template pme-app deploy/helm/pme-app > /dev/null
 
   # 2-6. Build, tests unitaires / intégration / acceptation, couverture, SonarQube (I1, I2, I3)
   build-test:

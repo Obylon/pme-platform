@@ -22,6 +22,7 @@
         <module>community-service</module>
         <module>notification-service</module>
         <module>shop-service</module>
+        <module>web-frontend</module>
     </modules>
 
     <properties>
@@ -45,6 +46,8 @@
         <!-- SonarQube / SonarCloud -->
         <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco-merged/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
         <sonar.qualitygate.wait>true</sonar.qualitygate.wait>
+        <!-- Site statique (JS/CSS) : vérifié par analyse statique et tests de bout en bout, pas par JaCoCo -->
+        <sonar.coverage.exclusions>**/src/main/resources/static/**</sonar.coverage.exclusions>
     </properties>
 
     <dependencyManagement>

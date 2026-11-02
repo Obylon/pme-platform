@@ -43,14 +43,18 @@ spec:
           ports:
             - { name: http, containerPort: 8080 }
           env:
+            {{- if $svc.database }}
             - { name: DB_URL, value: "jdbc:postgresql://{{ $root.Values.global.postgres.host }}:{{ $root.Values.global.postgres.port }}/{{ $svc.database }}" }
             - name: DB_USERNAME
               valueFrom: { secretKeyRef: { name: "pg-{{ $svc.database }}", key: username } }
             - name: DB_PASSWORD
               valueFrom: { secretKeyRef: { name: "pg-{{ $svc.database }}", key: password } }
+            {{- end }}
+            {{- if $svc.database }}
             - { name: OIDC_ISSUER_URI, value: {{ $root.Values.global.oidc.issuerUri | quote }} }
             - { name: OIDC_JWK_SET_URI, value: {{ $root.Values.global.oidc.jwkSetUri | quote }} }
             - { name: OIDC_AUDIENCE, value: {{ $root.Values.global.oidc.audience | quote }} }
+            {{- end }}
             {{- if $svc.amqp }}
             - { name: RABBITMQ_HOST, value: {{ $root.Values.global.rabbitmq.host | quote }} }
             - { name: RABBITMQ_PORT, value: {{ $root.Values.global.rabbitmq.port | quote }} }
@@ -70,7 +74,7 @@ spec:
             httpGet: { path: /actuator/health/readiness, port: http }
             periodSeconds: 5
           resources:
-            {{- toYaml $root.Values.resources | nindent 12 }}
+            {{- toYaml ($svc.resources | default $root.Values.resources) | nindent 12 }}
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
@@ -103,6 +107,16 @@ spec:
       sectionName: https
   hostnames: [{{ $root.Values.global.host | quote }}]
   rules:
+    {{- if eq $svc.pathPrefix "/" }}
+    # Route racine (site web) : les points de supervision ne sont jamais exposés sur Internet
+    - matches:
+        - path: { type: PathPrefix, value: /actuator }
+      filters:
+        - type: RequestRedirect
+          requestRedirect:
+            path: { type: ReplaceFullPath, replaceFullPath: / }
+            statusCode: 302
+    {{- end }}
     - matches:
         - path: { type: PathPrefix, value: {{ $svc.pathPrefix }} }
       backendRefs:
